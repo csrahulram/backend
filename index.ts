@@ -1,60 +1,25 @@
-import * as mongoose from 'mongoose';
-import {User, type UserType} from './schema/user';
-import {Hono} from 'hono';
+import dotenv from 'dotenv';
+dotenv.config({ path: '.env.dev' });
+import { init } from '@stricjs/app';
+import mongoose from 'mongoose';
 
-const app = new Hono();
+const DB_URL = process.env.DB_URL || '';
 
-mongoose.connect('mongodb://127.0.0.1:27017/mongoose-app')
-    .then(() => console.log('Connnection success..'))
-    .catch((e)=>console.log('Err in connection : ',e)
-);
+const CHAIN_CRT = process.env.CHAIN_CRT || '';
+const KEY = process.env.KEY || '';
+const PORT = 3000;
+// Main declaration
+mongoose
+  .connect(DB_URL)
+  .then(
+    async () => {
+      console.log(DB_URL);
+      console.log('Database connected successfully');
+      init({ routes: ['./src'] });
+    },
+    (err: any) => {
+      console.log(err);
+      console.log('Unable to connect database');
+    },
+  );
 
-const getAllUsers = async () => {
-    const users = await User.find();
-    return users;
-}
-
-const getUserById = async (id: string) => {
-    const users = await User.findById(id);
-    return users;
-}
-
-const updateUser = async (user: UserType&{_id: string}) => {
-    const res = await User.findByIdAndUpdate({_id: user._id},user);
-    return res;
-}
-
-const deleteUser = async (id: string) => {
-    const res = await User.findByIdAndDelete({_id: id});
-    return res;
-}
-
-app.get('/', (c) => 
-    c.text('Welcome to the App!')
-);
-
-app.get('/users', async (c) => {
-    const result = getAllUsers();
-    return c.json(await result)
-});
-
-app.get('/user/:id', async (c) => {
-    return c.json(await getUserById(c.req.param().id))
-});
-
-app.post('/adduser', async(c) => {
-    const result = await c.req.json()
-    return c.json(result);
-});
-
-app.put('/updateuser', async(c) => {
-    const user: UserType & {_id: string} = await c.req.json();    
-    const res = await updateUser(user);
-    return c.json(res);
-});
-
-app.delete('/removeuser/:id', async(c) => {
-    return c.json(await deleteUser(c.req.param().id))
-});
-
-export default app;
