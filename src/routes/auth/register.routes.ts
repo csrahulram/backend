@@ -7,12 +7,12 @@ import SendEmail from '../../controllers/send-email';
 import { RegisterUser } from '../../models/users';
 import CreateUser from '../../controllers/create-user';
 
-
-
 export default routes('api/v1/registration')
   .state({ post: jsonv(vld(RegisterUser)) })
   .reject(() => status('Bad request', 403))
   .post('/', async ctx => {
+    console.log(ctx);
+    
     const body = ctx.state.post;
     const emailExist = await EmailExist(body.email);
     if (emailExist) {
